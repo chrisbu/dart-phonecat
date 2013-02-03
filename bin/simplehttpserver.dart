@@ -3,8 +3,9 @@ import 'dart:async';
 
 // CONSTANTS
 final EXIT_INVALID_STARTUP_LOCATION = 1;
-var HOST = "127.0.0.1";
-var PORT = 8000;
+final HOST = "127.0.0.1";
+final PORT = 8000;
+final THIS_FOLDER = "bin";
 final Map<String,String> MIMETYPES = {
    "css": "text/css",
    "html": "text/html",
@@ -39,12 +40,13 @@ main() {
  * directory, so that it can find the correct files.
  * 
  * The correct path to start this script is 
- * `dart scripts/simplehttpserver.dart` but it is also likely that users will
- * start up actually within the scripts folder, eg: `dart simplehttpserver.dart`
+ * `dart bin/simplehttpserver.dart` but it is also likely that users will
+ * start up actually within the bin folder, eg: `dart simplehttpserver.dart`
  * so fix that without failing.
  * 
- *  :If startup in `scripts` folder, trim the path and look for a README.md file
- *  :If not startup in `scripts` folder, then look for a README.md file
+ *  :If startup in `bin` folder (represented by [THIS_FOLDER], 
+ *   trim the path and look for a README.md file
+ *  :If not startup in `b` folder, then look for a README.md file
  *  :If no README.md file found, then exit with error 1 
  */
 String initializeServerRoot() {
@@ -52,10 +54,10 @@ String initializeServerRoot() {
   
   var currentPath = dir.path;
   
-  if (currentPath.toLowerCase().endsWith("scripts")) {
-    // remove "scripts" if it appears at the end.
-    var scriptsIndex = currentPath.toLowerCase().lastIndexOf("scripts");
-    currentPath = dir.path.substring(0, scriptsIndex);    
+  if (currentPath.toLowerCase().endsWith(THIS_FOLDER)) {
+    // remove "bin" if it appears at the end.
+    var thisFolderIndex = currentPath.toLowerCase().lastIndexOf(THIS_FOLDER);
+    currentPath = dir.path.substring(0, thisFolderIndex);    
   }
   
   // add a trailing path separator (if reqd) before setting the serverRoot
@@ -81,7 +83,7 @@ This server appears to have been started from this location:
   $serverRoot
 This script should be started from within dart-phonecat/
 For example:
-  > dart scripts/simplehttpserver.dart""");
+  > dart bin/simplehttpserver.dart""");
     exit(EXIT_INVALID_STARTUP_LOCATION); // force exit of this process
   }
   else {
@@ -92,7 +94,7 @@ For example:
 /**
  * [relFile] is a filename relative to the [serverRoot], without a leading
  * path separator.  Valid values could be `README.md` or 
- * `scripts/simplehttpserver.dart' any \ or / characters are replaced with the
+ * `bin/simplehttpserver.dart'. Any \ or / characters are replaced with the
  * valid path separator.
  */
 bool fileExistsSync(String serverRoot, String relFile) {
