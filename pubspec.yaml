@@ -1,0 +1,9 @@
+name: phonecat-tutorial
+description: 
+  A port of the angularjs phonecat tutorial.  Each step is contained within
+  a git branch in this repo.
+dependencies:
+  browser: any
+  js: any
+  web_ui: any
+  unittest: any
