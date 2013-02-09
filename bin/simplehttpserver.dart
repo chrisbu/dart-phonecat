@@ -6,6 +6,8 @@ final EXIT_INVALID_STARTUP_LOCATION = 1;
 final HOST = "127.0.0.1";
 final PORT = 8000;
 final THIS_FOLDER = "bin";
+final README_FILE = "README.md";
+const DEFAULT_FILES = const ["app.html","index.html"];
 final Map<String,String> MIMETYPES = {
    "css": "text/css",
    "html": "text/html",
@@ -76,7 +78,7 @@ String initializeServerRoot() {
  * Exit with error if not.
  */
 bool validateServerRoot(String serverRoot) {
-  if (!fileExistsSync(serverRoot, "README.md")) {
+  if (!fileExistsSync(serverRoot, README_FILE)) {
     print("""
 Error:
 This server appears to have been started from this location: 
@@ -134,7 +136,18 @@ class StaticFileServer {
     if (req.method != "GET") return false;
   
     // GET request, so return true if the file exists.
-    return fileExistsSync(serverRoot, _getRelativeFilePathFromReq(req)); 
+    // Try for each default file.  If the a real path is specified, 
+    // then this will return true in the first iteration, otherwise, it will
+    // try for each default.
+    for (var defaultFile in DEFAULT_FILES) {
+      if (fileExistsSync(serverRoot, 
+          _getRelativeFilePathFromReq(req,defaultFile))) {
+        return true;
+      }
+      // else, continue
+    }
+    
+    return false;          
   }
   
   /**
@@ -142,7 +155,18 @@ class StaticFileServer {
    */
   void handler(req, res) {
     addCorsHeaders(res);
-    var requestedFile = _getRelativeFilePathFromReq(req);
+    
+    var requestedFile = "";
+    for (var defaultFile in DEFAULT_FILES) {
+      requestedFile = _getRelativeFilePathFromReq(req,defaultFile);
+      if (fileExistsSync(serverRoot, requestedFile)) {
+        break;
+      }
+      // else, continue
+      // on the basis that the matcher got us here, so we will get a file
+      // on the next iteration.
+    }
+    
     print("${req.method}: ${requestedFile}");
     
     addContentType(res,requestedFile);
@@ -156,19 +180,19 @@ class StaticFileServer {
    * server.  [defaultFile] defines the file to search for if the [req.path] ends
    * with a trailing /
    */
-  String _getRelativeFilePathFromReq(req, [var defaultFile="index.html"]) {
+  String _getRelativeFilePathFromReq(req, [String defaultFile]) {
     var requestedPath = req.path.replaceAll(r"/", Platform.pathSeparator);
     
     // trim any leading path separator to make for requested file relative
-    if (requestedPath.startsWith(Platform.pathSeparator)) {
+    if (requestedPath.startsWith(Platform.pathSeparator) && 
+        requestedPath.length > 1) {
       requestedPath = requestedPath.substring(1);
     }
     
     // if ends with trailing path separator, add the default file
-    if (requestedPath.endsWith(Platform.pathSeparator)) {
+    if (defaultFile != null && requestedPath.endsWith(Platform.pathSeparator)) {
       requestedPath = "$requestedPath$defaultFile";  
     }
-    
     return requestedPath;
   }
 }
